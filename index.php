@@ -27,6 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
   $errors['body'] = !empty($_COOKIE['body_error']);
   $errors['ability'] = !empty($_COOKIE['ability_error']);
   $errors['biographiya'] = !empty($_COOKIE['biographiya_error']);
+  $errors['check'] = !empty($_COOKIE['check_error']);
 
   if ($errors['name']) {
     setcookie('name_error', '', 100000);
@@ -56,6 +57,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
     setcookie('biographiya_error', '', 100000);
     $messages[] = '<div class="error">Напишите про себя</div>';
   }
+      if ($errors['check']) {
+    setcookie('check_error', '', 100000);
+    $messages[] = '<div class="error">Ознакомьтесь с соглашением.</div>';
+  }
 
   $values = array();
   $values['name'] = empty($_COOKIE['name_value']) ? '' : $_COOKIE['name_value'];
@@ -65,6 +70,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
   $values['body'] = empty($_COOKIE['body_value']) ? '' : $_COOKIE['body_value'];
   $values['ability'] = empty($_COOKIE['ability_value']) ? array() : json_decode($_COOKIE['ability_value']);
   $values['biographiya'] = empty($_COOKIE['biographiya_value']) ? '' : $_COOKIE['biographiya_value'];
+  $values['check'] = empty($_COOKIE['check_value']) ? '' : $_COOKIE['check_value'];
+
   if (empty($errors) && !empty($_COOKIE[session_name()]) &&
       !empty($_SESSION['login'])) {
     $user = 'u54409';
@@ -87,17 +94,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
       $get2->execute();
       $inf2=$get2->fetchALL();
       for($i=0;$i<count($inf2);$i++){
-        if($inf2[$i]['ability_id']=='1'){
+        if($inf2[$i]['power_id']=='1'){
           $values['1']=1;
         }
-        if($inf2[$i]['ability_id']=='2'){
+        if($inf2[$i]['power_id']=='2'){
           $values['2']=1;
         }
-        if($inf2[$i]['ability_id']=='3'){
+        if($inf2[$i]['power_id']=='3'){
           $values['3']=1;
-        }
-		if($inf2[$i]['ability_id']=='4'){
-          $values['4']=1;
         }
       }
     }
@@ -107,6 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
     }
     printf('Вход с логином %s, uid %d', $_SESSION['login'], $_SESSION['uid']);
   }
+  
   include('form.php');
 }
 else{
@@ -158,7 +163,7 @@ else {
   setcookie('gen_value', $_POST['gen'], time() + 30 * 24 * 60 * 60);
   setcookie('gen_error','',100000);
 }
-if (empty($_POST['body']) || ($_POST['body']!='0' && $_POST['body']!='4' && $_POST['body']!='5')) {
+if (empty($_POST['body']) || ($_POST['body']!='3' && $_POST['body']!='4' && $_POST['body']!='5')) {
    setcookie('body_error', '1', time() + 24 * 60 * 60);
    setcookie('body_value', '', 100000);
    $errors = TRUE;
@@ -191,6 +196,16 @@ else {
   setcookie('biographiya_error', '', time() + 24 * 60 * 60);
 }
 
+if (!isset($_POST['check'])) {
+    setcookie('check_error', '1', time() + 24 * 60 * 60);
+	setcookie('check_value', '', time() + 30 * 24 * 60 * 60);
+    $errors = TRUE;
+}
+else {
+  setcookie('check_value', $_POST['check'], time() + 30 * 24 * 60 * 60);
+    setcookie('check_error', '', time() + 24 * 60 * 60);
+}
+
 if ($errors) {
 	setcookie('save','',100000);
     header('Location: login.php');
@@ -202,6 +217,7 @@ if ($errors) {
       setcookie('gen_error', '', 100000);
       setcookie('body_error', '', 100000);
       setcookie('ability_error', '', 100000);
+	  setcookie('check_error', '', 100000);
     }
 	
 	$user = 'u54409';
@@ -213,6 +229,7 @@ if ($errors) {
     $upd->execute(array($_POST['name'],$_POST['email'],$_POST['birthdayear'],$_POST['gen'],$_POST['body'],$_POST['biographiya'],$id));
     $del=$db->prepare("delete from abforma where app_id=?");
     $del->execute(array($id));
+    $upd1=$db->prepare("insert into abforma set a_id=?,app_id=?");
 	  $stmt = $db->prepare("INSERT INTO abforma SET app_id = ?, a_id=?");
 	  foreach ($_POST['ability'] as $ability) {
 		$stmt->execute([$app_id,$ability ]);
@@ -235,7 +252,6 @@ if ($errors) {
         //  $pwr->execute(array($power,$id));
         //}
 		  $stmt = $db->prepare("INSERT INTO abforma SET app_id = ?, a_id=?");
-
   foreach ($_POST['ability'] as $ability) {
     $stmt->execute([$app_id,$ability ]);
   }
